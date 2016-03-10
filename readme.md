@@ -7,8 +7,8 @@ Clone the repository to a location that you can add to your `PYTHONPATH`.
 
 Dependencies: 
 
-- `GeoRaster` (github.com/atedstone/georaster)
-- `basemap`
+- [Georaster](https://www.github.com/atedstone/georaster)
+- matplotlib `basemap`
 - `matplotlib`
 
 
@@ -21,9 +21,11 @@ Dependencies:
 
     mymap = plotmap.Map(**kwargs)
 
-The Map object must be created with georeferencing information. This can be provided in two ways:
+The Map object must be created with georeferencing information. This can be provided in three ways:
      
 1. *With the `ds_file` argument* : str, link to a raster dataset understood by GeoRaster. The extent of the plotting area and the lon_0 will be set according to the properties of the dataset.
+
+2. *With the `georaster` argument* : a [Georaster](https://www.github.com/atedstone/georaster) SingleBandRaster or MultiBandRaster instance.
 
 2. *By setting `extent` and `lon_0` manually* :
 
