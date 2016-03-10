@@ -13,8 +13,6 @@ method docstrings for further information.
 Once the Map object has been created calling further methods of the object are
 not necessary.
 
-For a practical example look at landsat_velocities/PlotFunctions.plot_map().
-
 E.g. Add axes to subplot of existing figure:
 >>> fig = plt.figure(figsize=(3,7))
 >>> ax1 = plt.subplot(211)
@@ -44,21 +42,31 @@ class Map:
     fig = None
     extent = None
 
-    def __init__(self,ds_file=None,extent=None,lon_0=None,figsize=None,
-        fig=None,ax=None):
+    def __init__(self,ds_file=None,
+                      georaster=None,
+                      extent=None,lon_0=None,
+                      projection='tmerc',
+                      figsize=None,fig=None,ax=None):
         """
 
-        Create the Map object, which itself creates a Basemap instance.
+        Create a new map.
 
         The Map object must be initialised with georeferencing information.
-        This can be provided in two ways:
-            ds_file : str, link to a GeoTIFF. The extent of the plotting area
-                      and the lon_0 will be set according to the properties of
-                      the GeoTIFF.
-        Or: 
+        This can be provided in three ways:
+
+        (1)
+            ds_file : str, link to a dataset understood by GDAL. 
+                      The extent of the plotting area and the lon_0 will be 
+                      set according to the properties of the dataset.
+        
+        (2) 
             extent : (lon_lower_left,lon_upper_right,lat_lower_left,
                       lat_upper_right)
             lon_0 : float, longitude of origin
+
+        (3)
+            provide a georaster.SingleBandRaster or MultiBandRaster instance 
+            to the kwarg georaster
 
         Creation of the matplotlib figure:
         There are two options.
@@ -97,6 +105,10 @@ class Map:
             ds = georaster.SingleBandRaster(ds_file,load_data=False)
             extent = ds.get_extent_latlon()  
             lon_0 = ds.srs.GetProjParm('central_meridian')
+        elif georaster != None:
+            extent = georaster.get_extent_latlon()  
+            lon_0 = georaster.srs.GetProjParm('central_meridian')
+
         # Otherwise check that it has been provided manually
         else:
             if (extent == None) or (lon_0 == None):
@@ -108,7 +120,7 @@ class Map:
 
         # Create Basemap    
         self.map = Basemap(llcrnrlon=lonll,llcrnrlat=latll,urcrnrlon=lonur,
-                      urcrnrlat=latur,resolution='i',projection='tmerc',
+                      urcrnrlat=latur,resolution='i',projection=projection,
                       lon_0=lon_0,lat_0=0)
 
 
@@ -244,7 +256,8 @@ class Map:
 
 
     def geo_ticks(self,mstep,pstep,rotate_parallels=False,
-                    mlabels=(0,0,0,1),plabels=(1,0,0,0)):
+                    mlabels=(0,0,0,1),plabels=(1,0,0,0),
+                    round_to=0):
         """
         Add geographic (latlon) ticks to plot.
 
@@ -253,11 +266,11 @@ class Map:
             pstep : float, parallels stepping, degrees
 
         """
-        lonll, lonur, latll, latur = self.extent
-        m0 = int(lonll/mstep)*mstep
-        m1 = int(lonur/mstep+1)*mstep
-        p0 = int(latll/pstep)*pstep
-        p1 = int(latur/pstep+1)*pstep
+
+        m0 = int(np.round(self.map.lonmin/mstep,round_to))*mstep
+        m1 = int(np.round(self.map.lonmax/mstep,round_to))*mstep
+        p0 = int(np.round(self.map.latmin/pstep,round_to))*pstep
+        p1 = int(np.round(self.map.latmax/pstep,round_to))*pstep
 
         
         parallels = self.map.drawparallels(np.arange(p0,p1,pstep),labels=plabels,
@@ -269,8 +282,9 @@ class Map:
                 item = p[1][0]
                 item.set_rotation('vertical')
         
-        self.map.drawmeridians(np.arange(m0,m1,mstep),labels=mlabels,
-            linewidth=0.5,zorder=1000)
+        self.map.drawmeridians(np.arange(m0,m1,mstep),
+                            labels=mlabels,
+                            linewidth=0.5,zorder=1000)
 
 
 
