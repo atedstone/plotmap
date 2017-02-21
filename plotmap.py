@@ -86,11 +86,11 @@ class Map:
         """
 
         # Use handle to existing figure
-        if fig <> None and ax <> None:
+        if fig != None and ax != None:
             self.fig = fig
             self.ax = ax
         # Create figure of specified size
-        elif figsize <> None:
+        elif figsize != None:
             self.fig = plt.figure(figsize=figsize)
             self.ax = plt.subplot(111)
         # Create figure at system default size
@@ -101,7 +101,7 @@ class Map:
 
         # Get basic georeferencing info for map
         # From a geoTIFF
-        if ds_file <> None:
+        if ds_file != None:
             ds = georaster.SingleBandRaster(ds_file,load_data=False)
             extent = ds.get_extent_latlon()  
             lon_0 = ds.srs.GetProjParm('central_meridian')
@@ -112,7 +112,7 @@ class Map:
         # Otherwise check that it has been provided manually
         else:
             if (extent == None) or (lon_0 == None):
-                print 'Either ds_file must be provided, or extent and lon_0.'
+                print('Either ds_file must be provided, or extent and lon_0.')
                 raise AttributeError
 
         self.extent = extent
@@ -146,7 +146,7 @@ class Map:
                                               latlon=True)
 
         # Reduce image resolution
-        if coarse <> False:
+        if coarse != False:
             if type(coarse) == int:
                 bg.r = bg.r[::coarse,::coarse]
 
