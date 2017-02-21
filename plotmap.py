@@ -32,6 +32,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import warnings
 from matplotlib.colors import LightSource
 from matplotlib import rcParams
+import pandas as pd
 
 import georaster
 
@@ -252,6 +253,92 @@ class Map:
             plt.imshow(data.r,extent=data.get_extent_projected(self.map),
                 cmap=plt.get_cmap(cmap),
                 vmin=vmin,vmax=vmax,interpolation='nearest',alpha=1)
+
+
+    def load_polygons(self, shp_file, label):
+
+        """
+        Load polygons into a pandas DataFrame and return them.
+
+        :param shp_file: the path to the shapefile (do not provide suffix)
+        :type shp_file: str
+        :param label: the label to give the features in the shapefile
+        :type label: str
+
+        :returns: a pandas DataFrame of polygons, with 'poly' column
+        :rtype: pandas.DataFrame
+
+        """
+
+        from shapely.geometry import Polygon
+
+        self.map.readshapefile(shp_file, label, drawbounds=False)
+
+        # Load the polygons
+        df = pd.DataFrame({
+            'poly': [Polygon(xy) for xy in getattr(self.map, label)]
+            })
+
+        # Get all shapefile fields
+        firstrow = getattr(self.map, label + '_info')[0]
+        fields = [k for k in firstrow.keys()]
+
+        # Assign fields to dataframe
+        for f in fields:
+            df[f] = [field[f] for field in getattr(self.map, label + '_info')]
+
+        return df
+
+
+
+    def plot_polygons(self, df=None, shp_file=None, label=None, plot_kws=dict(), drop_invalid=True):
+        """
+        Plot polygons on map.
+
+        Either:
+        (1) provide a pandas DataFrame with the `df` argument, likely
+        loaded in using `load_polygons` and then manipulated in some way, or;
+        (2) Provide a file path and associated label for a shapefile, the
+        entire contents of the shapefile will be plotted.
+
+        :param df: a pandas DataFrame containing a 'poly' column of shapely Polygons
+        :type df: pandas.DataFrame
+        :param shp_file: the path to the shapefile (do not provide suffix)
+        :type shp_file: str
+        :param label: the label to give the features in the shapefile
+        :type label: str
+        :param plot_kws: style keywords to apply to each PolygonPatch.
+        :type plot_kws: dict
+        :param drop_invalid: if True, drop all invalid geometries before plotting
+        :type drop_invalid: bool
+
+        :returns: nothing
+
+        """
+
+        from matplotlib.collections import PatchCollection
+        from descartes import PolygonPatch
+
+        if df == None and (shp_file == None or label==None):
+            raise('Provide either df or both shp_file and label!')
+
+        if df == None:
+            df = self.load_polygons(shp_file, label)
+        
+        print(df)
+        # Assign whether geometry valid
+        if drop_invalid:
+            df = df.assign(valid=[item.is_valid for item in df['poly']])
+            # Delete invalid geometry
+            df = df[df['valid']]
+
+        # Convert to Patches
+        df['patches'] = df['poly'].map(lambda x: PolygonPatch(
+                x, **plot_kws))
+
+        # Plot on map
+        self.ax.add_collection(PatchCollection(df['patches'].values, 
+            match_original=True))  
 
 
 
