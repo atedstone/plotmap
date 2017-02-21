@@ -277,7 +277,7 @@ class Map:
             linewidth=0.3,zorder=1000)
         if rotate_parallels == True and 1 in plabels:
             # Rotate text labels for parallels to save space
-            for k,p in parallels.iteritems():
+            for k,p in parallels.items():
                 # p[1][0] is a text instance
                 item = p[1][0]
                 item.set_rotation('vertical')
