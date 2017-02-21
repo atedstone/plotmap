@@ -255,7 +255,7 @@ class Map:
                 vmin=vmin,vmax=vmax,interpolation='nearest',alpha=1)
 
 
-    def load_polygons(self, shp_file, label):
+    def load_polygons(self, shp_file, label, drop_invalid=True):
 
         """
         Load polygons into a pandas DataFrame and return them.
@@ -287,11 +287,17 @@ class Map:
         for f in fields:
             df[f] = [field[f] for field in getattr(self.map, label + '_info')]
 
+        # Assign whether geometry valid
+        if drop_invalid:
+            df = df.assign(valid=[item.is_valid for item in df['poly']])
+            # Delete invalid geometry
+            df = df[df['valid']]
+
         return df
 
 
 
-    def plot_polygons(self, df=None, shp_file=None, label=None, plot_kws=dict(), drop_invalid=True):
+    def plot_polygons(self, df=None, shp_file=None, label=None, plot_kws=dict(), **kwargs):
         """
         Plot polygons on map.
 
@@ -319,18 +325,11 @@ class Map:
         from matplotlib.collections import PatchCollection
         from descartes import PolygonPatch
 
-        if df == None and (shp_file == None or label==None):
+        if df is None and (shp_file is None or label is None):
             raise('Provide either df or both shp_file and label!')
 
-        if df == None:
+        if df is None:
             df = self.load_polygons(shp_file, label)
-        
-        print(df)
-        # Assign whether geometry valid
-        if drop_invalid:
-            df = df.assign(valid=[item.is_valid for item in df['poly']])
-            # Delete invalid geometry
-            df = df[df['valid']]
 
         # Convert to Patches
         df['patches'] = df['poly'].map(lambda x: PolygonPatch(
