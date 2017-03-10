@@ -343,13 +343,25 @@ class Map:
 
     def geo_ticks(self,mstep,pstep,rotate_parallels=False,
                     mlabels=(0,0,0,1),plabels=(1,0,0,0),
-                    round_to=0):
+                    round_to=0, **kwargs):
         """
-        Add geographic (latlon) ticks to plot.
+        Add geographic (lat/lon) ticks to plot.
 
-        Arguments:
-            mstep :  float, meridians stepping, degrees
-            pstep : float, parallels stepping, degrees
+        :param mstep: meridians stepping in degrees
+        :type mstep: float
+        :param pstep: parallels stepping in degrees
+        :type pstep: float
+        :param rotate_parallels: if true then rotate parallel labels 90deg
+        :type rotate_parallels: bool
+        :param mlabels: specify which edges to draw meridian labels on
+        :type mlabels: tuple
+        :param plabels: specify which edges to draw parallel labels on
+        :type plabels: tuple
+        :param round_to: dp to round meridian and parallel steps to
+        :type round_to: int
+        :returns: none
+
+        kwargs are passed directly to drawparallels() and drawmeridians().
 
         """
 
@@ -359,8 +371,9 @@ class Map:
         p1 = int(np.round(self.map.latmax/pstep,round_to))*pstep
 
         
-        parallels = self.map.drawparallels(np.arange(p0,p1,pstep),labels=plabels,
-            linewidth=0.3,zorder=1000)
+        parallels = self.map.drawparallels(np.arange(p0,p1,pstep),
+            labels=plabels, **kwargs)
+
         if rotate_parallels == True and 1 in plabels:
             # Rotate text labels for parallels to save space
             for k,p in parallels.items():
@@ -369,9 +382,7 @@ class Map:
                 item.set_rotation('vertical')
         
         self.map.drawmeridians(np.arange(m0,m1,mstep),
-                            labels=mlabels,
-                            linewidth=0.5,zorder=1000)
-
+                            labels=mlabels, **kwargs)
 
 
 
